@@ -118,7 +118,7 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
       // Robust fallback of ID prefix in case parsing/loading classes has slight timing delay
       const idLower = classId.toLowerCase();
       if (scope === 'MYP') return idLower.startsWith('myp');
-      if (scope === 'MS_HS') return idLower.startsWith('ms') || idLower.startsWith('hs');
+      if (scope === 'MS_HS') return idLower.startsWith('ms') || (idLower.startsWith('hs') && !idLower.startsWith('hss'));
       if (scope === 'HSS') return idLower.startsWith('hss');
       return false;
   };
