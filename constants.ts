@@ -1,11 +1,51 @@
-import { ClassSection, Student, Wing } from './types';
+import { ClassSection, Student, Wing, Teacher } from './types';
 
-// Mock Teachers List (Initials)
-export const MOCK_TEACHERS = [
-  'SGM', 'RJ', 'OKT', 'SRL', 'LYT', 'SKM', 'MDN', 'ETA', 'SYB', 'VDR', 
-  'KR', 'AJS', 'NVP', 'SMA', 'CDS', 'KSK', 'KCK', 'ALB', 'VC', 'AMC', 
-  'SPC', 'KYV', 'DSS', 'CHI', 'AJM', 'AKY', 'EAK'
+// Complete Official Teachers Directory
+export const TEACHERS_LIST: Teacher[] = [
+  { id: 't-sgm', name: 'Sai Sangamitra', code: 'SGM' },
+  { id: 't-rj', name: 'Rajasekar S', code: 'RJ' },
+  { id: 't-okt', name: 'Omana K Thomas', code: 'OKT' },
+  { id: 't-srl', name: 'Sreelalitha', code: 'SRL' },
+  { id: 't-lyt', name: 'Lidya Teena', code: 'LYT' },
+  { id: 't-skm', name: 'Senthil Kumar R', code: 'SKM' },
+  { id: 't-mdn', name: 'Madhusoodhanan', code: 'MDN' },
+  { id: 't-eta', name: 'Ajith E T', code: 'ETA' },
+  { id: 't-syb', name: 'Suyash Bajpai', code: 'SYB' },
+  { id: 't-vdr', name: 'Varsha Deshiker M R', code: 'VDR' },
+  { id: 't-kr', name: 'K Ramani', code: 'KR' },
+  { id: 't-ajs', name: 'Anand Jeyasingh S', code: 'AJS' },
+  { id: 't-nvp', name: 'Neelima V P', code: 'NVP' },
+  { id: 't-sma', name: 'Shaikh Mohammed Afsar M', code: 'SMA' },
+  { id: 't-cds', name: 'Chandana Sen', code: 'CDS' },
+  { id: 't-ksk', name: 'Kiran Shukla', code: 'KSK' },
+  { id: 't-msk', name: 'Sateesh', code: 'MSK' },
+  { id: 't-avs', name: 'Shanthini', code: 'AVS' },
+  { id: 't-alb', name: 'Anthony Lazar Babu', code: 'ALB' },
+  { id: 't-sdt', name: 'Sandeep Tonge', code: 'SDT' },
+  { id: 't-rth', name: 'Ritu Singh Deval', code: 'RTH' },
+  { id: 't-ssq', name: 'Sinan Sidheeq', code: 'SSQ' },
+  { id: 't-pr', name: 'Piyush Ranjan', code: 'PR' },
+  { id: 't-njk', name: 'Nanda Jeevesh Kukreja', code: 'NJK' },
+  { id: 't-mc', name: 'Maitri Chatterjee', code: 'MC' },
+  { id: 't-sdp', name: 'Subhadip Pradhan', code: 'SDP' },
+  { id: 't-vc', name: 'Vishnu Chandran', code: 'VC' },
+  { id: 't-amc', name: 'Ashish Mathew Cherian', code: 'AMC' },
+  { id: 't-spc', name: 'S Prabhakara Choudhary', code: 'SPC' },
+  { id: 't-kyv', name: 'Komal Yadav', code: 'KYV' },
+  { id: 't-chi', name: 'Chiteshwary Rajput', code: 'CHI' },
+  { id: 't-ajm', name: 'Ajith.M', code: 'AJM' },
+  { id: 't-eak', name: 'Elizabeth Kumari', code: 'EAK' },
+  { id: 't-ndk', name: 'Nandha Kumar', code: 'NDK' },
+  { id: 't-sy', name: 'Sagar Yadav', code: 'SY' },
+  { id: 't-fbd', name: 'Felix Basil Dmello', code: 'FBD' },
+  { id: 't-vb', name: 'Vibhav Borwankar', code: 'VB' },
+  { id: 't-kck', name: 'KCK', code: 'KCK' },
+  { id: 't-dss', name: 'DSS', code: 'DSS' },
+  { id: 't-aky', name: 'AKY', code: 'AKY' }
 ];
+
+// Teachers List (Codes / Initials)
+export const MOCK_TEACHERS = TEACHERS_LIST.map(t => t.code);
 
 // --- MYP OFFICIAL STUDENT ROSTERS ---
 export const MYP1A_RAW: Student[] = [

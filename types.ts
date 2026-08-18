@@ -10,6 +10,12 @@ export interface Student {
   rollNumber: number;
 }
 
+export interface Teacher {
+  id: string;
+  name: string;
+  code: string;
+}
+
 export type Wing = 'MYP' | 'MS' | 'HS' | 'HSS';
 
 export interface ClassSection {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { QrCode, Save, Clock, XCircle, CheckCircle, Search, ArrowLeft, Sun, Moon, AlertTriangle, X, Calendar, History, Eye, Loader2, Lock, Edit3, Image as ImageIcon, ShieldCheck, KeyRound, Smartphone, MonitorX, Filter, LogOut } from 'lucide-react';
 import QRScanner from '../components/QRScanner';
 import { ClassSection, StudentAttendanceRecord, AttendanceStatus, SessionType, DisciplinaryRecord, Wing } from '../types';
-import { MOCK_TEACHERS } from '../constants';
+import { MOCK_TEACHERS, TEACHERS_LIST } from '../constants';
 import { saveAttendanceLog, saveDisciplinaryRecord, getDisciplinaryRecordsForToday, getClasses, getAppSettings, getExistingLogForClass, getTimetableImage, isDeviceTrusted, trustDevice } from '../services/storageService';
 
 interface TeacherViewProps {
@@ -408,9 +408,13 @@ const TeacherView: React.FC<TeacherViewProps> = ({ autoSelectedClassId, onLogout
                     <select 
                         value={teacherName} 
                         onChange={(e) => setTeacherName(e.target.value)}
-                        className="w-full p-3 border border-slate-300 rounded-lg outline-none"
+                        className="w-full p-3 border border-slate-300 rounded-lg outline-none bg-white font-medium text-slate-800 text-sm"
                     >
-                        {MOCK_TEACHERS.map(t => <option key={t} value={t}>{t}</option>)}
+                        {TEACHERS_LIST.map(t => (
+                            <option key={t.id} value={t.code}>
+                                {t.code} — {t.name}
+                            </option>
+                        ))}
                     </select>
                 </div>
 

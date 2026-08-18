@@ -5,6 +5,7 @@ import { getLogsForToday, getLogsByMonth, saveDisciplinaryRecord, getDisciplinar
 import { exportClassMonthlyAttendanceWorkbook } from '../services/excelExportService';
 import { printQRCardsSheet, generateClassQRDataUrl } from '../services/qrPrintService';
 import { ClassAttendanceLog, AttendanceStatus, DisciplinaryRecord, ClassSection, Student, StudentAttendanceRecord, Wing } from '../types';
+import { TEACHERS_LIST } from '../constants';
 
 const COLORS = ['#10b981', '#f59e0b', '#f43f5e'];
 
@@ -711,7 +712,20 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
                         <option value="">Select Student</option>
                         {getStudentsForIncident().map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </select>
-                    <input placeholder="Reported By" value={incidentReporter} onChange={e => setIncidentReporter(e.target.value)} className="w-full p-2 border rounded"/>
+                    <div>
+                        <input 
+                            list="coordinator-incident-teachers"
+                            placeholder="Reported By (e.g. SGM, SKM or Name)" 
+                            value={incidentReporter} 
+                            onChange={e => setIncidentReporter(e.target.value)} 
+                            className="w-full p-2 border rounded"
+                        />
+                        <datalist id="coordinator-incident-teachers">
+                            {TEACHERS_LIST.map(t => (
+                                <option key={t.id} value={t.code}>{t.name} ({t.code})</option>
+                            ))}
+                        </datalist>
+                    </div>
                     <textarea placeholder="Description" value={incidentDescription} onChange={e => setIncidentDescription(e.target.value)} className="w-full p-2 border rounded h-24"/>
                     <button onClick={handleSaveIncident} className="w-full bg-rose-600 text-white py-2 rounded">Save</button>
                     <button onClick={() => setIsLoggingIncident(false)} className="w-full text-slate-500 py-2">Cancel</button>
