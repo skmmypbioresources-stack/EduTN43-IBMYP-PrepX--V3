@@ -37,13 +37,29 @@
       }
     </style>
     <script>
-      // Register Service Worker for Desktop & Mobile PWA Installation
+      // Early global capture of PWA beforeinstallprompt event so it is never missed
+      window.__pwaPrompt = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.__pwaPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwa_prompt_ready'));
+        console.log('Global PWA install prompt ready');
+      });
+
+      window.addEventListener('appinstalled', function() {
+        window.__pwaPrompt = null;
+        console.log('GSIS PrepX installed successfully to desktop/device');
+      });
+
+      // Immediate Service Worker Registration for Desktop & Mobile Installation
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service Worker registered successfully:', reg.scope))
-            .catch(err => console.warn('Service Worker registration failed:', err));
-        });
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(function(reg) {
+            console.log('Service Worker active for scope:', reg.scope);
+          })
+          .catch(function(err) {
+            console.warn('Service Worker registration error:', err);
+          });
       }
     </script>
 <script type="importmap">
