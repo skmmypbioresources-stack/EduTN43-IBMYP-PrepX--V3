@@ -1,0 +1,10 @@
+{
+  "name": "GSIS IBMYP - PrepX version 2.0",
+  "description": "QR-based attendance tracking system for MYP Prep Duty teachers with AI-powered reporting for Coordinators and HOS.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

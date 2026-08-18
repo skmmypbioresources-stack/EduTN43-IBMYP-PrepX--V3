@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student",
+      "description": "Represents a student enrolled in a class.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "rollNumber": { "type": "integer" }
+      },
+      "required": ["id", "name", "rollNumber"]
+    },
+    "ClassSection": {
+      "title": "ClassSection",
+      "description": "Represents a class section with a list of students.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "wing": { "type": "string", "enum": ["MYP", "MS", "HS", "HSS"] },
+        "grade": { "type": "string" },
+        "section": { "type": "string" },
+        "students": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      },
+      "required": ["id", "wing", "grade", "section", "students"]
+    },
+    "StudentAttendanceRecord": {
+      "title": "StudentAttendanceRecord",
+      "description": "An attendance status for an individual student in a log.",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "status": { "type": "string", "enum": ["Present", "Absent", "Late"] },
+        "reason": { "type": "string" }
+      },
+      "required": ["studentId", "status"]
+    },
+    "ClassAttendanceLog": {
+      "title": "ClassAttendanceLog",
+      "description": "Attendance log for a specific class section on a specific date/session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "classId": { "type": "string" },
+        "timestamp": { "type": "integer" },
+        "session": { "type": "string", "enum": ["Morning", "Evening"] },
+        "teacherName": { "type": "string" },
+        "records": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      },
+      "required": ["id", "classId", "timestamp", "session", "teacherName", "records"]
+    },
+    "DisciplinaryRecord": {
+      "title": "DisciplinaryRecord",
+      "description": "A disciplinary report for a student.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "studentName": { "type": "string" },
+        "classId": { "type": "string" },
+        "className": { "type": "string" },
+        "reportedBy": { "type": "string" },
+        "description": { "type": "string" },
+        "timestamp": { "type": "integer" },
+        "escalatedToHOS": { "type": "boolean" }
+      },
+      "required": ["id", "studentId", "studentName", "classId", "className", "reportedBy", "description", "timestamp"]
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "description": "Application settings including session locks and pins.",
+      "type": "object",
+      "properties": {
+        "isMorningLocked": { "type": "boolean" },
+        "teacherAccessPin": { "type": "string" }
+      },
+      "required": ["isMorningLocked", "teacherAccessPin"]
+    },
+    "TimetableImage": {
+      "title": "TimetableImage",
+      "description": "Base64 encoded timetable image for a specific wing.",
+      "type": "object",
+      "properties": {
+        "wing": { "type": "string", "enum": ["MYP", "MS", "HS", "HSS"] },
+        "image": { "type": "string" }
+      },
+      "required": ["wing"]
+    }
+  },
+  "firestore": {
+    "/classes/{classId}": {
+      "schema": "ClassSection",
+      "description": "Collections of active class sections."
+    },
+    "/trash_classes/{classId}": {
+      "schema": "ClassSection",
+      "description": "Collections of soft-deleted class sections."
+    },
+    "/attendance_logs/{logId}": {
+      "schema": "ClassAttendanceLog",
+      "description": "Attendance log entries."
+    },
+    "/disciplinary_records/{recordId}": {
+      "schema": "DisciplinaryRecord",
+      "description": "Disciplinary incidents logged by teachers."
+    },
+    "/settings/global": {
+      "schema": "AppSettings",
+      "description": "Global application settings configuration."
+    },
+    "/timetables/{wingId}": {
+      "schema": "TimetableImage",
+      "description": "Wing timetables stored as base64 images."
+    }
+  }
+}
