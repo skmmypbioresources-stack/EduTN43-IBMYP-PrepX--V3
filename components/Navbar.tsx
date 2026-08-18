@@ -1,6 +1,7 @@
 import React from 'react';
 import { School, LayoutDashboard, UserCheck, Briefcase, CalendarDays, Lock } from 'lucide-react';
 import { View } from '../App';
+import { InstallPWA } from './InstallPWA';
 
 interface NavbarProps {
   currentView: View;
@@ -17,7 +18,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView }) => {
           <div className="flex items-center cursor-pointer group" onClick={() => onChangeView('home')}>
             <School className="h-8 w-8 text-blue-400 mr-3 group-hover:scale-110 transition-transform" />
             <div className="flex flex-col justify-center">
-                <span className="font-black text-2xl tracking-tighter leading-none italic font-serif text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-white">
+                <span className="font-black text-xl sm:text-2xl tracking-tighter leading-none italic font-serif text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-white">
                   GSIS IBMYP - PrepX
                 </span>
                 <span className="text-[10px] text-slate-400 font-medium leading-none mt-1.5 flex items-center uppercase tracking-widest">
@@ -25,7 +26,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView }) => {
                 </span>
             </div>
           </div>
-          <div className="flex space-x-1 sm:space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            <InstallPWA variant="navbar" />
             <button
               onClick={() => onChangeView('teacher')}
               className={`px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors ${

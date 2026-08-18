@@ -3,8 +3,9 @@ import Navbar from './components/Navbar';
 import TeacherView from './pages/TeacherView';
 import CoordinatorDashboard, { CoordinatorScope } from './pages/CoordinatorDashboard';
 import HOSDashboard from './pages/HOSDashboard';
-import { QrCode, ClipboardList, Shield, GraduationCap, CalendarClock, Hand, Lock, ChevronRight, X, UserCog } from 'lucide-react';
-import { getTimetableImage, hasAnyTimetable } from './services/storageService';
+import { InstallPWA } from './components/InstallPWA';
+import { QrCode, ClipboardList, Shield, GraduationCap, CalendarClock, Hand, Lock, ChevronRight, X, UserCog, Sparkles } from 'lucide-react';
+import { getTimetableImage, hasAnyTimetable, getClasses } from './services/storageService';
 import { Wing } from './types';
 
 export type View = 'home' | 'teacher' | 'coordinator' | 'hos';
@@ -31,7 +32,7 @@ const App: React.FC = () => {
   const [pinError, setPinError] = useState(false);
 
   useEffect(() => {
-    // 1. Check for URL Parameters (QR Code Direct Launch)
+    // 1. Check for URL Parameters (QR Code Direct Launch from Mobile Phone)
     const params = new URLSearchParams(window.location.search);
     const classIdParam = params.get('classId');
     if (classIdParam) {
@@ -45,7 +46,9 @@ const App: React.FC = () => {
         else if (lowerId.startsWith('ms')) detectedWing = 'MS';
         
         loadCoverTimetable(detectedWing);
-        setShowCover(true); // CRITICAL: Show timetable first, then user clicks "Proceed to Class"
+        // Automatically switch to teacher view for rapid mobile roll call
+        setCurrentView('teacher');
+        setShowCover(false);
     } else {
         // 2. Load Timetable if exists and not direct launching
         if (hasAnyTimetable()) {
@@ -277,7 +280,7 @@ const App: React.FC = () => {
                        Comprehensive Prep Attendance System for MYP, Middle School, High School & HSS.
                      </p>
         
-                     <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-16">
+                     <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
                         {/* Teacher Card */}
                         <div 
                           onClick={() => setCurrentView('teacher')}
@@ -325,6 +328,11 @@ const App: React.FC = () => {
                               Aggregated Executive View across all wings (MYP, MS, HS, HSS). (PIN Required)
                             </p>
                         </div>
+                     </div>
+                     
+                     {/* Desktop & Mobile App Install Banner */}
+                     <div className="max-w-5xl mx-auto mb-10">
+                        <InstallPWA variant="card" />
                      </div>
                      
                      {/* Button to show timetable again if needed */}
