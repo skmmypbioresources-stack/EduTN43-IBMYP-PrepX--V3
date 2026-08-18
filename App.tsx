@@ -347,7 +347,7 @@ const App: React.FC = () => {
                             <div className="bg-purple-100 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                                 <GraduationCap className="w-8 h-8 text-purple-600" />
                             </div>
-                            <h3 className="text-xl font-bold text-slate-800 mb-3">HOS</h3>
+                            <h3 className="text-xl font-bold text-slate-800 mb-3">HOS/HM</h3>
                             <p className="text-slate-500 text-sm leading-relaxed">
                               Aggregated Executive View across all wings (MYP, MS, HS, HSS). (PIN Required)
                             </p>

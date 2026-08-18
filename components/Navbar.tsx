@@ -53,7 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onChangeView }) => {
               }`}
             >
               <Lock className="w-3 h-3 mr-1.5 opacity-70" />
-              <span className="hidden sm:block">HOS</span>
+              <span className="hidden sm:block">HOS/HM</span>
             </button>
           </div>
         </div>

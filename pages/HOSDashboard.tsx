@@ -125,7 +125,7 @@ const HOSDashboard: React.FC = () => {
       <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-center relative z-10 gap-6">
         <div>
             <h1 className="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
-                <Briefcase className="w-8 h-8 text-purple-600" /> HOS Executive View
+                <Briefcase className="w-8 h-8 text-purple-600" /> HOS/HM Executive View
             </h1>
             <p className="text-slate-500 mt-2">Real-time attendance & strength analytics across all wings.</p>
         </div>
