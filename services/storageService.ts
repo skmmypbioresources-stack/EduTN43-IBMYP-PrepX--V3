@@ -221,6 +221,7 @@ export const hasAnyTimetable = (): boolean => {
 export interface AppSettings {
   isMorningLocked: boolean;
   teacherAccessPin: string;
+  qrBaseUrl?: string;
 }
 
 export const getAppSettings = (): AppSettings => {
@@ -239,8 +240,31 @@ export const getAppSettings = (): AppSettings => {
 
 export const saveAppSettings = (settings: AppSettings): void => {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  window.dispatchEvent(new Event('storageService_settingsUpdate'));
   setDoc(doc(db, "settings", "global"), settings)
     .catch(error => handleFirestoreError(error, OperationType.WRITE, "settings/global"));
+};
+
+export const getQRTargetBaseUrl = (): string => {
+  const settings = getAppSettings();
+  if (settings.qrBaseUrl && settings.qrBaseUrl.trim().length > 0) {
+    return settings.qrBaseUrl.trim().replace(/\/+$/, '');
+  }
+  // Auto-detect: If inside internal AI Studio dev session, fallback to public preview domain
+  const origin = window.location.origin;
+  if (origin.includes('ais-dev-')) {
+    return origin.replace('ais-dev-', 'ais-pre-');
+  }
+  return origin;
+};
+
+export const setQRTargetBaseUrl = (url: string): void => {
+  const settings = getAppSettings();
+  const sanitized = url.trim().replace(/\/+$/, '');
+  saveAppSettings({
+    ...settings,
+    qrBaseUrl: sanitized
+  });
 };
 
 // --- Trusted Device Logic ---

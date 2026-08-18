@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { RefreshCw, AlertCircle, TrendingUp, Users, Calendar, Download, PlusCircle, X, ShieldAlert, ArrowUpRight, CheckCircle, Loader2, Save, Trash2, UserPlus, Search, Settings, Lock, Unlock, Image as ImageIcon, UploadCloud, QrCode, Printer, Archive, Database, RefreshCcw, KeyRound, Clock, User, FileBarChart, PenSquare, LayoutGrid, RotateCcw, AlertTriangle, ArrowRightLeft, Shuffle, ListPlus, ArrowUpDown, Sparkles, Check, Edit3 } from 'lucide-react';
-import { getLogsForToday, getLogsByMonth, saveDisciplinaryRecord, getDisciplinaryRecordsForToday, escalateDisciplinaryRecord, getClasses, addStudentToClass, deleteStudentFromClass, updateStudentInClass, moveStudentToClass, reorderClassRollNumbers, bulkAddStudentsToClass, syncRosterWithOfficial, getAppSettings, saveAppSettings, saveTimetableImage, getTimetableImage, createBackupData, exportAllLogsToCSV, factoryReset, getAttendanceLogs, getDisciplinaryRecords, addNewClass, updateClassDetails, deleteClass, getTrashClasses, restoreClass, permanentlyDeleteClass } from '../services/storageService';
+import { RefreshCw, AlertCircle, TrendingUp, Users, Calendar, Download, PlusCircle, X, ShieldAlert, ArrowUpRight, CheckCircle, Loader2, Save, Trash2, UserPlus, Search, Settings, Lock, Unlock, Image as ImageIcon, UploadCloud, QrCode, Printer, Archive, Database, RefreshCcw, KeyRound, Clock, User, FileBarChart, PenSquare, LayoutGrid, RotateCcw, AlertTriangle, ArrowRightLeft, Shuffle, ListPlus, ArrowUpDown, Sparkles, Check, Edit3, Globe, ExternalLink } from 'lucide-react';
+import { getLogsForToday, getLogsByMonth, saveDisciplinaryRecord, getDisciplinaryRecordsForToday, escalateDisciplinaryRecord, getClasses, addStudentToClass, deleteStudentFromClass, updateStudentInClass, moveStudentToClass, reorderClassRollNumbers, bulkAddStudentsToClass, syncRosterWithOfficial, getAppSettings, saveAppSettings, saveTimetableImage, getTimetableImage, createBackupData, exportAllLogsToCSV, factoryReset, getAttendanceLogs, getDisciplinaryRecords, addNewClass, updateClassDetails, deleteClass, getTrashClasses, restoreClass, permanentlyDeleteClass, getQRTargetBaseUrl, setQRTargetBaseUrl } from '../services/storageService';
+import { exportClassMonthlyAttendanceWorkbook } from '../services/excelExportService';
+import { printQRCardsSheet, generateClassQRDataUrl } from '../services/qrPrintService';
 import { ClassAttendanceLog, AttendanceStatus, DisciplinaryRecord, ClassSection, Student, StudentAttendanceRecord, Wing } from '../types';
 
 const COLORS = ['#10b981', '#f59e0b', '#f43f5e'];
@@ -12,6 +14,96 @@ export type CoordinatorScope = 'MYP' | 'MS_HS' | 'HSS';
 interface CoordinatorDashboardProps {
     scope: CoordinatorScope;
 }
+
+const QRCardItem: React.FC<{ cls: ClassSection; baseUrl: string }> = ({ cls, baseUrl }) => {
+  const [qrUrl, setQrUrl] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsGenerating(true);
+    generateClassQRDataUrl(cls.id, baseUrl)
+      .then(url => {
+        if (isMounted) {
+          setQrUrl(url);
+          setIsGenerating(false);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to generate QR code:", err);
+        if (isMounted) setIsGenerating(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [cls.id, baseUrl]);
+
+  const handleDownloadSingle = () => {
+    if (!qrUrl) return;
+    const a = document.createElement('a');
+    a.href = qrUrl;
+    a.download = `QR_Card_${cls.grade.replace(/\s+/g, '_')}_${cls.section}.png`;
+    a.click();
+  };
+
+  const targetDirectUrl = `${baseUrl}/?classId=${encodeURIComponent(cls.id)}&creator=SKM`;
+
+  return (
+    <div className="border-2 border-slate-900 p-5 text-center bg-white rounded-2xl flex flex-col items-center justify-between shadow-sm hover:shadow-md transition-all relative group">
+      <div className="absolute top-3 right-3 text-[10px] font-black uppercase px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md border border-slate-200">
+        {cls.wing}
+      </div>
+      
+      <div>
+        <h3 className="font-black text-2xl uppercase tracking-tight text-slate-900">{cls.grade}</h3>
+        <div className="bg-slate-900 text-white px-3.5 py-1 rounded-full font-black text-xs inline-block my-1.5 tracking-wider">
+          SEC {cls.section}
+        </div>
+      </div>
+
+      <div className="my-2 p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center">
+        {qrUrl ? (
+          <img 
+            src={qrUrl} 
+            alt={`QR Code for ${cls.grade} ${cls.section}`} 
+            className="w-36 h-36 rounded" 
+          />
+        ) : (
+          <div className="w-36 h-36 flex flex-col items-center justify-center text-slate-400 gap-2">
+            <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+            <span className="text-[10px] font-medium">Generating QR...</span>
+          </div>
+        )}
+      </div>
+
+      <div className="w-full space-y-2 mt-1">
+        <div>
+          <p className="text-[10px] text-slate-700 font-extrabold tracking-wider uppercase">SCAN TO ENTER CLASS - SKM</p>
+          <p className="text-[10px] text-slate-400 font-semibold">{cls.students?.length || 0} Students &middot; PrepX v2.0</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleDownloadSingle}
+            disabled={!qrUrl}
+            className="flex-1 py-1.5 px-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+            title="Download PNG image of this QR code"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-600" /> Download PNG
+          </button>
+          <a
+            href={targetDirectUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="py-1.5 px-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-indigo-600 rounded-lg text-xs font-medium flex items-center justify-center gap-1 border border-slate-200"
+            title="Test this QR direct launch link in a new tab"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) => {
   const [activeTab, setActiveTab] = useState<'daily' | 'monthly' | 'classes' | 'students' | 'reports' | 'timetable' | 'settings' | 'qrcards'>('daily');
@@ -85,8 +177,15 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
   const [timetableImage, setTimetableImage] = useState<string | null>(null);
   const [uploadWing, setUploadWing] = useState<Wing>('MYP');
 
+  // QR Code Configuration State
+  const [qrBaseUrl, setQrBaseUrl] = useState<string>(getQRTargetBaseUrl());
+  const [isEditingQRUrl, setIsEditingQRUrl] = useState(false);
+  const [customUrlInput, setCustomUrlInput] = useState('');
+  const [qrUrlNotice, setQrUrlNotice] = useState<string | null>(null);
+
   // Real-time Firebase Sync trigger
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isPrintingQR, setIsPrintingQR] = useState(false);
 
   useEffect(() => {
     const handler = () => setRefreshTrigger(prev => prev + 1);
@@ -165,6 +264,7 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
     const settings = getAppSettings();
     setIsMorningLocked(settings.isMorningLocked);
     setTeacherAccessPin(settings.teacherAccessPin || '8899');
+    setQrBaseUrl(getQRTargetBaseUrl());
     
     // Set default upload wing based on scope
     if (scope === 'MYP') setUploadWing('MYP');
@@ -345,9 +445,46 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
     }, 600);
   };
   const handleEscalate = (id: string) => { setProcessingId(id); setTimeout(() => { escalateDisciplinaryRecord(id); refreshDailyData(); setProcessingId(null); }, 600); };
-  const handlePrintQR = () => window.print();
+  const handlePrintQR = async () => {
+    setIsPrintingQR(true);
+    try {
+      const wingLabel = scope === 'MYP' ? 'MYP' : scope === 'HSS' ? 'HSS' : 'MS/HS';
+      await printQRCardsSheet(scopeClasses, wingLabel, qrBaseUrl);
+    } catch (e) {
+      console.error("Print failed:", e);
+      window.print();
+    } finally {
+      setIsPrintingQR(false);
+    }
+  };
+
+  const handleSaveQRUrl = (urlToSet: string) => {
+    setQRTargetBaseUrl(urlToSet);
+    const updated = getQRTargetBaseUrl();
+    setQrBaseUrl(updated);
+    setIsEditingQRUrl(false);
+    setQrUrlNotice("Target URL updated! All QR codes now point to this address.");
+    setTimeout(() => setQrUrlNotice(null), 4000);
+  };
+
+  const handleResetQRUrl = () => {
+    setQRTargetBaseUrl(window.location.origin);
+    setQrBaseUrl(window.location.origin);
+    setIsEditingQRUrl(false);
+    setQrUrlNotice("Target URL reset to current origin.");
+    setTimeout(() => setQrUrlNotice(null), 4000);
+  };
   const handleFactoryReset = () => { if (confirm("DANGER: RESET ALL DATA?")) { if (confirm("Did you download CSV backup?")) { factoryReset(); } } };
   const handleExportCSV = () => { exportAllLogsToCSV(); };
+  const handleExportMonthlyExcel = () => {
+    const currentClass = classes.find(c => c.id === selectedClassId);
+    if (!currentClass) {
+      alert("Please select a class to export.");
+      return;
+    }
+    const allMonthly = getLogsByMonth(selectedMonth, selectedYear);
+    exportClassMonthlyAttendanceWorkbook(currentClass, selectedMonth, selectedYear, allMonthly);
+  };
   const toggleMorningLock = () => { const s = !isMorningLocked; setIsMorningLocked(s); const set = getAppSettings(); saveAppSettings({ ...set, isMorningLocked: s }); };
   const updateTeacherPin = (p: string) => { setTeacherAccessPin(p); if (p.length===4) { const set = getAppSettings(); saveAppSettings({ ...set, teacherAccessPin: p }); } };
   const createBackup = () => createBackupData();
@@ -1250,48 +1387,219 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
 
       {/* QR Cards Tab - Scoped */}
       {activeTab === 'qrcards' && (
-          <div className="space-y-4">
-              <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm print:hidden">
-                  <h3 className="font-bold">QR Cards ({scope})</h3>
-                  <button onClick={handlePrintQR} className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"><Printer className="w-4 h-4"/> Print</button>
-              </div>
-              <div id="printable-qr-grid" className="grid grid-cols-3 gap-4">
-                  {scopeClasses.map(cls => (
-                      <div key={cls.id} className="border-2 border-slate-900 p-4 text-center bg-white rounded-xl flex flex-col items-center">
-                          <h3 className="font-black text-xl uppercase">{cls.grade}</h3>
-                          <div className="bg-slate-900 text-white px-3 py-1 rounded-full font-bold mb-2">SEC {cls.section}</div>
-                          <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&ecc=H&data=${encodeURIComponent(`${window.location.origin}${window.location.pathname}?classId=${cls.id}&creator=SKM`)}`} className="w-32 h-32 mb-2" />
-                          <p className="text-[10px] text-slate-500 font-bold">SCAN TO ENTER CLASS - SKM</p>
+          <div className="space-y-6">
+              {/* QR Target Base URL Configuration Banner */}
+              <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-2xl shadow-md border border-slate-800">
+                  <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                      <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                              <span className="bg-indigo-500/30 text-indigo-300 text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border border-indigo-400/30">
+                                  Mobile Scan Destination
+                              </span>
+                              {qrBaseUrl.includes('ais-dev-') && (
+                                  <span className="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border border-amber-500/30">
+                                      <AlertTriangle className="w-3 h-3" /> Dev Environment URL
+                                  </span>
+                              )}
+                          </div>
+                          <div className="flex items-center gap-2 font-mono text-sm text-slate-200 break-all">
+                              <Globe className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                              <span className="font-semibold text-white">{qrBaseUrl}</span>
+                          </div>
+                          <p className="text-xs text-slate-400">
+                              Phones scanning these QR codes will immediately open this URL directly into the teacher's classroom view.
+                          </p>
                       </div>
-                  ))}
+
+                      <div className="flex items-center gap-2 flex-wrap">
+                          <a 
+                            href={`${qrBaseUrl}/?creator=SKM`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="bg-white/10 hover:bg-white/20 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors"
+                            title="Verify link works in browser"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" /> Test Link
+                          </a>
+                          <button 
+                            onClick={() => {
+                              setCustomUrlInput(qrBaseUrl);
+                              setIsEditingQRUrl(!isEditingQRUrl);
+                            }}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" /> {isEditingQRUrl ? 'Cancel' : 'Change Target URL'}
+                          </button>
+                      </div>
+                  </div>
+
+                  {/* Warning for ais-dev session */}
+                  {qrBaseUrl.includes('ais-dev-') && (
+                      <div className="mt-3.5 pt-3 border-t border-slate-800 text-xs text-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-start sm:items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5 sm:mt-0" />
+                              <span>
+                                  <strong>Notice for Mobile Cameras:</strong> Internal preview URLs (<code>ais-dev-...</code>) return <em>Page Not Found</em> on phones. Set your live Vercel domain or public preview URL below.
+                              </span>
+                          </div>
+                          <button 
+                            onClick={() => handleSaveQRUrl(window.location.origin.replace('ais-dev-', 'ais-pre-'))}
+                            className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold px-3 py-1 rounded-lg border border-amber-500/40 cursor-pointer self-start sm:self-auto whitespace-nowrap"
+                          >
+                            Use Public URL
+                          </button>
+                      </div>
+                  )}
+
+                  {/* Edit Form */}
+                  {isEditingQRUrl && (
+                      <div className="mt-4 pt-4 border-t border-slate-800 bg-slate-950/60 p-4 rounded-xl space-y-3">
+                          <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                              Set Custom Web Domain or Deployment URL
+                          </label>
+                          <div className="flex flex-col sm:flex-row gap-2">
+                              <input 
+                                type="url" 
+                                value={customUrlInput}
+                                onChange={(e) => setCustomUrlInput(e.target.value)}
+                                placeholder="https://your-school-app.vercel.app"
+                                className="flex-1 bg-slate-900 border border-slate-700 text-white rounded-xl px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                              />
+                              <button 
+                                onClick={() => handleSaveQRUrl(customUrlInput)}
+                                disabled={!customUrlInput.trim()}
+                                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <Check className="w-4 h-4" /> Save Target URL
+                              </button>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap text-xs text-slate-400 pt-1">
+                              <span>Quick presets:</span>
+                              <button 
+                                onClick={() => handleSaveQRUrl(window.location.origin.replace('ais-dev-', 'ais-pre-'))}
+                                className="text-indigo-400 hover:text-indigo-300 underline"
+                              >
+                                Public Preview Domain
+                              </button>
+                              <span>&middot;</span>
+                              <button 
+                                onClick={handleResetQRUrl}
+                                className="text-slate-300 hover:text-white underline"
+                              >
+                                Current Browser Domain
+                              </button>
+                          </div>
+                      </div>
+                  )}
+
+                  {qrUrlNotice && (
+                      <div className="mt-3 p-2.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 rounded-xl text-xs font-medium flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                          {qrUrlNotice}
+                      </div>
+                  )}
               </div>
+
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                  <div>
+                      <div className="flex items-center gap-2">
+                          <QrCode className="w-6 h-6 text-indigo-600" />
+                          <h3 className="text-xl font-bold text-slate-900">Classroom QR Cards ({scope})</h3>
+                      </div>
+                      <p className="text-sm text-slate-500 mt-1">
+                          High-resolution QR entry codes for all {scopeClasses.length} classes. Print and stick on classroom entrance doors.
+                      </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                      <button 
+                          onClick={handlePrintQR} 
+                          disabled={isPrintingQR || scopeClasses.length === 0}
+                          className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-sm shadow-indigo-200 transition-all cursor-pointer"
+                      >
+                          {isPrintingQR ? (
+                              <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  Preparing A4 Sheet...
+                              </>
+                          ) : (
+                              <>
+                                  <Printer className="w-4 h-4" />
+                                  Print QR Cards (A4)
+                              </>
+                          )}
+                      </button>
+                  </div>
+              </div>
+
+              {scopeClasses.length === 0 ? (
+                  <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+                      <QrCode className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                      <h4 className="text-lg font-bold text-slate-700">No Classes in Scope</h4>
+                      <p className="text-sm text-slate-500">Add classes in the 'Classes' tab to generate QR entrance cards.</p>
+                  </div>
+              ) : (
+                  <div id="printable-qr-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {scopeClasses.map(cls => (
+                          <QRCardItem key={cls.id} cls={cls} baseUrl={qrBaseUrl} />
+                      ))}
+                  </div>
+              )}
           </div>
       )}
 
       {/* Settings Tab - Same for all coords */}
       {activeTab === 'settings' && (
           <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-xl shadow-sm border">
-                  <h3 className="font-bold mb-4">Prep Access</h3>
-                  <button onClick={toggleMorningLock} className={`px-4 py-2 rounded w-full font-bold flex items-center justify-center gap-2 ${isMorningLocked ? 'bg-slate-200 text-slate-600' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {isMorningLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                      {isMorningLocked ? "Morning Prep Locked (Click to Unlock)" : "Morning Prep Open (Click to Lock)"}
-                  </button>
-                  <div className="mt-6">
+              <div className="bg-white p-6 rounded-xl shadow-sm border space-y-6">
+                  <div>
+                      <h3 className="font-bold mb-4">Prep Access & Timing</h3>
+                      <button onClick={toggleMorningLock} className={`px-4 py-2 rounded w-full font-bold flex items-center justify-center gap-2 ${isMorningLocked ? 'bg-slate-200 text-slate-600' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {isMorningLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                          {isMorningLocked ? "Morning Prep Locked (Click to Unlock)" : "Morning Prep Open (Click to Lock)"}
+                      </button>
+                  </div>
+
+                  <div>
                       <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Teacher PIN</h4>
                       <input 
                         type="text" 
                         value={teacherAccessPin} 
                         onChange={(e) => updateTeacherPin(e.target.value)}
-                        className="border p-2 rounded w-full font-mono text-center tracking-widest"
+                        className="border p-2 rounded w-full font-mono text-center tracking-widest text-lg font-bold"
                         maxLength={4}
                       />
+                      <p className="text-xs text-slate-400 mt-1 text-center">4-digit code used by teachers on classroom phones</p>
+                  </div>
+
+                  <div>
+                      <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">QR Code Target URL</h4>
+                      <div className="flex gap-2">
+                          <input 
+                            type="url" 
+                            value={qrBaseUrl} 
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setQrBaseUrl(val);
+                              setQRTargetBaseUrl(val);
+                            }}
+                            className="border p-2 rounded flex-1 font-mono text-xs text-slate-700"
+                            placeholder="https://your-app.vercel.app"
+                          />
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1">Domain encoded inside printed classroom QR cards for mobile phones</p>
                   </div>
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm border">
-                   <h3 className="font-bold mb-4">Data</h3>
-                   <button onClick={handleExportCSV} className="w-full border p-2 rounded mb-2 text-sm hover:bg-slate-50">Download Full CSV</button>
-                   <button onClick={createBackup} className="w-full border p-2 rounded mb-2 text-sm hover:bg-slate-50">Download System Backup</button>
+                   <h3 className="font-bold mb-4">Data & Reports</h3>
+                   <button onClick={handleExportMonthlyExcel} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-2.5 rounded-lg mb-2 text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+                       <FileBarChart className="w-4 h-4" /> Download Excel Register (Multi-Sheet .xlsx)
+                   </button>
+                   <button onClick={handleExportCSV} className="w-full border p-2 rounded-lg mb-2 text-sm hover:bg-slate-50 flex items-center justify-center gap-2">
+                       <Download className="w-4 h-4 text-slate-500" /> Download Full CSV
+                   </button>
+                   <button onClick={createBackup} className="w-full border p-2 rounded-lg mb-2 text-sm hover:bg-slate-50 flex items-center justify-center gap-2">
+                       <Database className="w-4 h-4 text-slate-500" /> Download System Backup
+                   </button>
                    <button onClick={handleFactoryReset} className="w-full bg-rose-50 text-rose-600 p-2 rounded text-sm font-bold hover:bg-rose-100">Factory Reset</button>
               </div>
           </div>
@@ -1300,7 +1608,7 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
       {/* Monthly View */}
        {activeTab === 'monthly' && (
         <div className="bg-white p-6 rounded-xl border shadow-sm space-y-6">
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap items-end gap-4">
                 <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Year</label>
                     <select value={selectedYear} onChange={e => setSelectedYear(parseInt(e.target.value))} className="border p-2 rounded w-24">
@@ -1315,14 +1623,26 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
                         ))}
                     </select>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-[200px]">
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Class</label>
                     <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)} className="border p-2 rounded w-full">
                         {scopeClasses.map(c => <option key={c.id} value={c.id}>{c.grade} - {c.section}</option>)}
                     </select>
                 </div>
-                <div className="flex items-end">
-                    <button onClick={handleExportCSV} className="bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2"><Download className="w-4 h-4"/> Export CSV</button>
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={handleExportMonthlyExcel} 
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm shadow-sm transition-colors cursor-pointer"
+                        title="Download multi-sheet Excel file with 1 sheet per student"
+                    >
+                        <FileBarChart className="w-4 h-4"/> Download Excel (.xlsx)
+                    </button>
+                    <button 
+                        onClick={handleExportCSV} 
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                        <Download className="w-3.5 h-3.5"/> CSV
+                    </button>
                 </div>
             </div>
 

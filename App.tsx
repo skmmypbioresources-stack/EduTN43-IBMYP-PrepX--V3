@@ -32,15 +32,39 @@ const App: React.FC = () => {
   const [pinError, setPinError] = useState(false);
 
   useEffect(() => {
-    // 1. Check for URL Parameters (QR Code Direct Launch from Mobile Phone)
+    // 1. Robust Check for URL Parameters (QR Code Direct Launch from Mobile Phone)
+    let detectedClassId: string | null = null;
+
+    // Check search query (?classId=... or ?class=...)
     const params = new URLSearchParams(window.location.search);
-    const classIdParam = params.get('classId');
-    if (classIdParam) {
-        setDirectClassId(classIdParam);
+    detectedClassId = params.get('classId') || params.get('class') || params.get('id');
+
+    // Check hash query (#classId=... or #/classId=... or #/teacher?classId=...)
+    if (!detectedClassId && window.location.hash) {
+      const cleanHash = window.location.hash.replace(/^#\/?/, '');
+      if (cleanHash.includes('=')) {
+        const hashParams = new URLSearchParams(cleanHash.includes('?') ? cleanHash.split('?')[1] : cleanHash);
+        detectedClassId = hashParams.get('classId') || hashParams.get('class') || hashParams.get('id');
+      } else if (cleanHash.startsWith('myp-') || cleanHash.startsWith('ms-') || cleanHash.startsWith('hs-') || cleanHash.startsWith('hss-')) {
+        detectedClassId = cleanHash;
+      }
+    }
+
+    // Check pathname (e.g. /qr/myp-1-a or /class/myp-1-a)
+    if (!detectedClassId && window.location.pathname) {
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const lastPart = pathParts[pathParts.length - 1];
+      if (lastPart && (lastPart.startsWith('myp-') || lastPart.startsWith('ms-') || lastPart.startsWith('hs-') || lastPart.startsWith('hss-'))) {
+        detectedClassId = lastPart;
+      }
+    }
+
+    if (detectedClassId) {
+        setDirectClassId(detectedClassId);
         
         // Smart Wing Detection from ID to show relevant timetable
         let detectedWing: Wing = 'MYP';
-        const lowerId = classIdParam.toLowerCase();
+        const lowerId = detectedClassId.toLowerCase();
         if (lowerId.startsWith('hss')) detectedWing = 'HSS';
         else if (lowerId.startsWith('hs')) detectedWing = 'HS';
         else if (lowerId.startsWith('ms')) detectedWing = 'MS';
