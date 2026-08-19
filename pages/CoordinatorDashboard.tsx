@@ -120,6 +120,7 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedClassId, setSelectedClassId] = useState('');
   const [monthlyLogs, setMonthlyLogs] = useState<ClassAttendanceLog[]>([]);
+  const [monthlySessionView, setMonthlySessionView] = useState<'All' | 'Evening' | 'Morning' | 'Detailed'>('All');
 
   // Student Report State
   const [reportYear, setReportYear] = useState(new Date().getFullYear());
@@ -1620,8 +1621,54 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
       )}
       
       {/* Monthly View */}
-       {activeTab === 'monthly' && (
-        <div className="bg-white p-6 rounded-xl border shadow-sm space-y-6">
+       {activeTab === 'monthly' && (() => {
+        const currentClass = classes.find(c => c.id === selectedClassId);
+        const sortedStudents = [...(currentClass?.students || [])].sort((a, b) => {
+            const rA = parseInt(String(a.rollNumber || '0'), 10) || 0;
+            const rB = parseInt(String(b.rollNumber || '0'), 10) || 0;
+            if (rA && rB) return rA - rB;
+            return (a.name || '').localeCompare(b.name || '');
+        });
+        const totalDaysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+        const daysList = Array.from({length: totalDaysInMonth}, (_, i) => i + 1);
+
+        const getStudentAttendance = (student: Student, d: number) => {
+            const dayLogs = monthlyLogs.filter(l => new Date(l.timestamp).getDate() === d);
+            dayLogs.sort((a, b) => b.timestamp - a.timestamp);
+            
+            const morningLog = dayLogs.find(l => l.session === 'Morning');
+            const eveningLog = dayLogs.find(l => l.session === 'Evening');
+            
+            const findStatusInLog = (log?: ClassAttendanceLog) => {
+                if (!log) return undefined;
+                const rec = log.records.find(r => 
+                    r.studentId === student.id || 
+                    (r as any).studentName?.trim().toUpperCase() === student.name.trim().toUpperCase()
+                );
+                return rec?.status;
+            };
+            
+            const mStatus = findStatusInLog(morningLog);
+            const eStatus = findStatusInLog(eveningLog);
+            
+            return { mStatus, eStatus, hasMorning: !!morningLog, hasEvening: !!eveningLog };
+        };
+
+        const getBadge = (s?: AttendanceStatus) => {
+            if (s === AttendanceStatus.PRESENT) {
+                return <span className="inline-block w-6 h-6 leading-6 text-center rounded bg-emerald-100 text-emerald-800 font-bold text-xs">P</span>;
+            }
+            if (s === AttendanceStatus.ABSENT) {
+                return <span className="inline-block w-6 h-6 leading-6 text-center rounded bg-rose-100 text-rose-800 font-bold text-xs">A</span>;
+            }
+            if (s === AttendanceStatus.LATE) {
+                return <span className="inline-block w-6 h-6 leading-6 text-center rounded bg-amber-100 text-amber-800 font-bold text-xs">L</span>;
+            }
+            return <span className="text-slate-300 font-mono text-xs">-</span>;
+        };
+
+        return (
+          <div className="bg-white p-6 rounded-xl border shadow-sm space-y-6">
             <div className="flex flex-wrap items-end gap-4">
                 <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Year</label>
@@ -1639,10 +1686,46 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
                 </div>
                 <div className="flex-1 min-w-[200px]">
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Class</label>
-                    <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)} className="border p-2 rounded w-full">
+                    <select value={selectedClassId} onChange={e => setSelectedClassId(e.target.value)} className="border p-2 rounded w-full font-bold">
                         {scopeClasses.map(c => <option key={c.id} value={c.id}>{c.grade} - {c.section}</option>)}
                     </select>
                 </div>
+
+                {/* Session View Mode Selector */}
+                <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Session View</label>
+                    <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                        <button 
+                            onClick={() => setMonthlySessionView('All')}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${monthlySessionView === 'All' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            title="Consolidated daily attendance"
+                        >
+                            Daily (Single Row)
+                        </button>
+                        <button 
+                            onClick={() => setMonthlySessionView('Evening')}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${monthlySessionView === 'Evening' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            title="Evening Prep attendance"
+                        >
+                            Evening Prep
+                        </button>
+                        <button 
+                            onClick={() => setMonthlySessionView('Morning')}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${monthlySessionView === 'Morning' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            title="Morning Prep attendance"
+                        >
+                            Morning Prep
+                        </button>
+                        <button 
+                            onClick={() => setMonthlySessionView('Detailed')}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${monthlySessionView === 'Detailed' ? 'bg-white text-indigo-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                            title="Separate labeled rows for Morning and Evening"
+                        >
+                            Detailed (M/E)
+                        </button>
+                    </div>
+                </div>
+
                 <div className="flex items-center gap-2">
                     <button 
                         onClick={handleExportMonthlyExcel} 
@@ -1660,52 +1743,171 @@ const CoordinatorDashboard: React.FC<CoordinatorDashboardProps> = ({ scope }) =>
                 </div>
             </div>
 
+            {/* Attendance Legend & Total Strength */}
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <div className="flex items-center gap-4">
+                    <span className="font-bold text-slate-700">Total Students: <span className="text-indigo-600 font-extrabold">{sortedStudents.length}</span></span>
+                    <span className="text-slate-300">|</span>
+                    <span className="flex items-center gap-1.5 font-bold text-emerald-800"><span className="w-3.5 h-3.5 bg-emerald-100 rounded text-center leading-3.5 text-[10px] inline-block font-black">P</span> Present</span>
+                    <span className="flex items-center gap-1.5 font-bold text-rose-800"><span className="w-3.5 h-3.5 bg-rose-100 rounded text-center leading-3.5 text-[10px] inline-block font-black">A</span> Absent</span>
+                    <span className="flex items-center gap-1.5 font-bold text-amber-800"><span className="w-3.5 h-3.5 bg-amber-100 rounded text-center leading-3.5 text-[10px] inline-block font-black">L</span> Late</span>
+                    <span className="flex items-center gap-1.5 text-slate-500 font-medium"><span className="w-3.5 h-3.5 bg-slate-100 rounded text-center leading-3.5 text-[10px] inline-block text-slate-400 font-mono">-</span> No Session</span>
+                </div>
+                <div className="text-[11px] text-slate-500 italic">
+                    Showing: {monthlySessionView === 'All' ? 'Consolidated Daily Attendance' : monthlySessionView === 'Evening' ? 'Evening Prep Only' : monthlySessionView === 'Morning' ? 'Morning Prep Only' : 'Morning & Evening (Labeled Rows)'}
+                </div>
+            </div>
+
             {/* Calendar Grid */}
-            <div className="overflow-x-auto border rounded-xl">
+            <div className="overflow-x-auto border rounded-xl shadow-xs">
                  <table className="w-full text-sm border-collapse">
                      <thead>
-                         <tr>
-                             <th className="p-3 border bg-slate-100 sticky left-0 z-10 w-48 text-left">Student</th>
-                             {Array.from({length: new Date(selectedYear, selectedMonth + 1, 0).getDate()}, (_, i) => i + 1).map(d => (
-                                 <th key={d} className="p-2 border bg-slate-50 text-xs w-10 text-center">{d}</th>
+                         <tr className="bg-slate-100">
+                             <th className="p-3 border sticky left-0 z-20 bg-slate-100 w-16 text-center text-xs font-bold text-slate-600">Roll #</th>
+                             <th className="p-3 border sticky left-16 z-20 bg-slate-100 min-w-[180px] text-left text-xs font-bold text-slate-700">Student Name</th>
+                             {monthlySessionView === 'Detailed' && (
+                                 <th className="p-2 border sticky left-[244px] z-20 bg-slate-100 text-center text-xs font-bold text-slate-600 w-16">Session</th>
+                             )}
+                             {daysList.map(d => (
+                                 <th key={d} className="p-2 border bg-slate-50 text-xs w-9 min-w-[36px] text-center font-bold text-slate-700">{d}</th>
                              ))}
+                             <th className="p-2 border bg-emerald-50 text-xs text-center font-bold text-emerald-800 w-12">P</th>
+                             <th className="p-2 border bg-rose-50 text-xs text-center font-bold text-rose-800 w-12">A</th>
+                             <th className="p-2 border bg-amber-50 text-xs text-center font-bold text-amber-800 w-12">L</th>
+                             <th className="p-2 border bg-indigo-50 text-xs text-center font-bold text-indigo-800 w-16">%</th>
                          </tr>
                      </thead>
                      <tbody>
-                         {classes.find(c => c.id === selectedClassId)?.students.map(student => (
-                             <tr key={student.id} className="hover:bg-slate-50">
-                                 <td className="p-2 border sticky left-0 bg-white font-medium text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-[12rem]">{student.name}</td>
-                                 {Array.from({length: new Date(selectedYear, selectedMonth + 1, 0).getDate()}, (_, i) => i + 1).map(d => {
-                                     // Find logs for this day
-                                     const dayLogs = monthlyLogs.filter(l => new Date(l.timestamp).getDate() === d);
-                                     // Sort logs by timestamp descending so that the latest submission/update is picked first
-                                     dayLogs.sort((a, b) => b.timestamp - a.timestamp);
-                                     // Check for Morning and Evening
-                                     const morningLog = dayLogs.find(l => l.session === 'Morning');
-                                     const eveningLog = dayLogs.find(l => l.session === 'Evening');
-                                     
-                                     const mStatus = morningLog?.records.find(r => r.studentId === student.id)?.status;
-                                     const eStatus = eveningLog?.records.find(r => r.studentId === student.id)?.status;
-                                     
-                                     const getCode = (s?: AttendanceStatus) => s === AttendanceStatus.PRESENT ? 'P' : s === AttendanceStatus.ABSENT ? 'A' : s === AttendanceStatus.LATE ? 'L' : '-';
-                                     const getColor = (s?: AttendanceStatus) => s === AttendanceStatus.ABSENT ? 'text-rose-600 font-bold' : s === AttendanceStatus.LATE ? 'text-amber-600 font-bold' : 'text-slate-400';
+                         {sortedStudents.map(student => {
+                             // Calculate overall stats for this student
+                             let totalP = 0;
+                             let totalA = 0;
+                             let totalL = 0;
+                             let totalLoggedDays = 0;
 
-                                     return (
-                                         <td key={d} className="border text-center text-[10px] p-0 h-8">
-                                             <div className="flex flex-col h-full">
-                                                 <div className={`flex-1 border-b flex items-center justify-center ${getColor(mStatus)} bg-slate-50/50`}>{getCode(mStatus)}</div>
-                                                 <div className={`flex-1 flex items-center justify-center ${getColor(eStatus)}`}>{getCode(eStatus)}</div>
-                                             </div>
-                                         </td>
-                                     );
-                                 })}
-                             </tr>
-                         ))}
+                             daysList.forEach(d => {
+                                 const { mStatus, eStatus } = getStudentAttendance(student, d);
+                                 let primaryStatus: AttendanceStatus | undefined;
+                                 if (monthlySessionView === 'Evening') primaryStatus = eStatus;
+                                 else if (monthlySessionView === 'Morning') primaryStatus = mStatus;
+                                 else primaryStatus = eStatus || mStatus;
+
+                                 if (primaryStatus) {
+                                     totalLoggedDays++;
+                                     if (primaryStatus === AttendanceStatus.PRESENT) totalP++;
+                                     else if (primaryStatus === AttendanceStatus.ABSENT) totalA++;
+                                     else if (primaryStatus === AttendanceStatus.LATE) totalL++;
+                                 }
+                             });
+
+                             const pct = totalLoggedDays > 0 ? Math.round((totalP / totalLoggedDays) * 100) : 100;
+
+                             if (monthlySessionView === 'Detailed') {
+                                 // Render two explicit rows per student with clear session labels
+                                 return (
+                                     <React.Fragment key={student.id}>
+                                         {/* Morning Row */}
+                                         <tr className="hover:bg-slate-50/70 border-b border-slate-100">
+                                             <td rowSpan={2} className="p-2.5 border sticky left-0 z-10 bg-white font-mono text-center font-bold text-xs text-slate-500">
+                                                 {student.rollNumber || '-'}
+                                             </td>
+                                             <td rowSpan={2} className="p-2.5 border sticky left-16 z-10 bg-white font-bold text-xs text-slate-800 uppercase whitespace-nowrap overflow-hidden text-ellipsis max-w-[14rem]">
+                                                 {student.name}
+                                             </td>
+                                             <td className="p-1.5 border sticky left-[244px] z-10 bg-slate-50 text-center">
+                                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800">
+                                                     Morning
+                                                 </span>
+                                             </td>
+                                             {daysList.map(d => {
+                                                 const { mStatus } = getStudentAttendance(student, d);
+                                                 return (
+                                                     <td key={d} className="border text-center p-1 h-9">
+                                                         {getBadge(mStatus)}
+                                                     </td>
+                                                 );
+                                             })}
+                                             <td rowSpan={2} className="p-2 border bg-emerald-50/30 text-center font-bold text-xs text-emerald-700">{totalP}</td>
+                                             <td rowSpan={2} className="p-2 border bg-rose-50/30 text-center font-bold text-xs text-rose-700">{totalA}</td>
+                                             <td rowSpan={2} className="p-2 border bg-amber-50/30 text-center font-bold text-xs text-amber-700">{totalL}</td>
+                                             <td rowSpan={2} className="p-2 border bg-indigo-50/30 text-center font-bold text-xs text-indigo-700">{pct}%</td>
+                                         </tr>
+                                         {/* Evening Row */}
+                                         <tr className="hover:bg-slate-50/70 border-b-2 border-slate-200">
+                                             <td className="p-1.5 border sticky left-[244px] z-10 bg-slate-50 text-center">
+                                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-800">
+                                                     Evening
+                                                 </span>
+                                             </td>
+                                             {daysList.map(d => {
+                                                 const { eStatus } = getStudentAttendance(student, d);
+                                                 return (
+                                                     <td key={d} className="border text-center p-1 h-9">
+                                                         {getBadge(eStatus)}
+                                                     </td>
+                                                 );
+                                             })}
+                                         </tr>
+                                     </React.Fragment>
+                                 );
+                             }
+
+                             // Single Clean Row per Student (All / Evening / Morning)
+                             return (
+                                 <tr key={student.id} className="hover:bg-slate-50 border-b last:border-0">
+                                     <td className="p-2.5 border sticky left-0 z-10 bg-white font-mono text-center font-bold text-xs text-slate-500">
+                                         {student.rollNumber || '-'}
+                                     </td>
+                                     <td className="p-2.5 border sticky left-16 z-10 bg-white font-bold text-xs text-slate-800 uppercase whitespace-nowrap overflow-hidden text-ellipsis max-w-[14rem]">
+                                         {student.name}
+                                     </td>
+                                     {daysList.map(d => {
+                                         const { mStatus, eStatus } = getStudentAttendance(student, d);
+                                         let renderedBadge;
+
+                                         if (monthlySessionView === 'Evening') {
+                                             renderedBadge = getBadge(eStatus);
+                                         } else if (monthlySessionView === 'Morning') {
+                                             renderedBadge = getBadge(mStatus);
+                                         } else {
+                                             // 'All' consolidated mode
+                                             if (mStatus && eStatus && mStatus !== eStatus) {
+                                                 // Both sessions marked and different
+                                                 renderedBadge = (
+                                                     <div className="flex flex-col items-center justify-center gap-0.5 text-[9px] leading-none py-0.5 font-bold">
+                                                         <span className={mStatus === AttendanceStatus.PRESENT ? 'text-emerald-700' : mStatus === AttendanceStatus.ABSENT ? 'text-rose-700' : 'text-amber-700'}>
+                                                             M:{mStatus === AttendanceStatus.PRESENT ? 'P' : mStatus === AttendanceStatus.ABSENT ? 'A' : 'L'}
+                                                         </span>
+                                                         <span className={eStatus === AttendanceStatus.PRESENT ? 'text-emerald-700' : eStatus === AttendanceStatus.ABSENT ? 'text-rose-700' : 'text-amber-700'}>
+                                                             E:{eStatus === AttendanceStatus.PRESENT ? 'P' : eStatus === AttendanceStatus.ABSENT ? 'A' : 'L'}
+                                                         </span>
+                                                     </div>
+                                                 );
+                                             } else {
+                                                 const activeStatus = eStatus || mStatus;
+                                                 renderedBadge = getBadge(activeStatus);
+                                             }
+                                         }
+
+                                         return (
+                                             <td key={d} className="border text-center p-1 h-9">
+                                                 {renderedBadge}
+                                             </td>
+                                         );
+                                     })}
+                                     <td className="p-2 border bg-emerald-50/30 text-center font-bold text-xs text-emerald-700">{totalP}</td>
+                                     <td className="p-2 border bg-rose-50/30 text-center font-bold text-xs text-rose-700">{totalA}</td>
+                                     <td className="p-2 border bg-amber-50/30 text-center font-bold text-xs text-amber-700">{totalL}</td>
+                                     <td className="p-2 border bg-indigo-50/30 text-center font-bold text-xs text-indigo-700">{pct}%</td>
+                                 </tr>
+                             );
+                         })}
                      </tbody>
                  </table>
             </div>
         </div>
-      )}
+       );
+      })()}
     </div>
   );
 };
