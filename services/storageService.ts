@@ -114,6 +114,14 @@ onSnapshot(collection(db, "classes"), async (snapshot) => {
         setDoc(doc(db, "classes", officialCls.id), officialCls).catch(() => {});
       } else {
         const target = classesList[targetIndex];
+        let updatedRoster = false;
+        for (const officialStudent of officialCls.students) {
+          const existingStudent = target.students.find(s => s.id === officialStudent.id || s.name.trim().toUpperCase() === officialStudent.name.trim().toUpperCase());
+          if (existingStudent && existingStudent.rollNumber !== officialStudent.rollNumber) {
+            existingStudent.rollNumber = officialStudent.rollNumber;
+            updatedRoster = true;
+          }
+        }
         const hasDummy = target.students.some(s => 
           s.name.startsWith('VACANT') || 
           s.name.startsWith('STUDENT MYP') || 
@@ -121,6 +129,10 @@ onSnapshot(collection(db, "classes"), async (snapshot) => {
         );
         if (hasDummy || target.students.length === 0) {
           classesList[targetIndex].students = JSON.parse(JSON.stringify(officialCls.students));
+          updatedRoster = true;
+        }
+        if (updatedRoster) {
+          classesList[targetIndex].students.sort((a, b) => a.rollNumber - b.rollNumber);
           setDoc(doc(db, "classes", target.id), classesList[targetIndex]).catch(() => {});
         }
       }
@@ -305,6 +317,13 @@ export const getClasses = (): ClassSection[] => {
         classes.push(JSON.parse(JSON.stringify(officialCls)));
         modified = true;
       } else {
+        for (const officialStudent of officialCls.students) {
+          const existingStudent = classes[idx].students.find(s => s.id === officialStudent.id || s.name.trim().toUpperCase() === officialStudent.name.trim().toUpperCase());
+          if (existingStudent && existingStudent.rollNumber !== officialStudent.rollNumber) {
+            existingStudent.rollNumber = officialStudent.rollNumber;
+            modified = true;
+          }
+        }
         const hasOldOrDummy = classes[idx].students.some(s => 
           s.name.startsWith('VACANT') || 
           s.name.startsWith('STUDENT MYP') || 
@@ -313,6 +332,9 @@ export const getClasses = (): ClassSection[] => {
         if (hasOldOrDummy || classes[idx].students.length === 0) {
           classes[idx].students = JSON.parse(JSON.stringify(officialCls.students));
           modified = true;
+        }
+        if (modified) {
+          classes[idx].students.sort((a, b) => a.rollNumber - b.rollNumber);
         }
       }
     }
