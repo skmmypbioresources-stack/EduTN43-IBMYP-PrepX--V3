@@ -16,6 +16,7 @@ const TRASH_CLASS_KEY = 'myp_class_trash_v1';
 const SETTINGS_KEY = 'myp_app_settings_v1';
 const TIMETABLE_PREFIX = 'myp_prep_timetable_v2_';
 const TRUSTED_DEVICE_KEY = 'myp_prep_device_trusted_v1';
+const REGISTERED_TEACHER_KEY = 'myp_prep_registered_teacher_v1';
 
 const OFFICIAL_MYP_CLASS_IDS = new Set(MYP_CLASSES.map(c => c.id));
 
@@ -293,7 +294,15 @@ export const untrustDevice = (): void => {
   localStorage.removeItem(TRUSTED_DEVICE_KEY);
 };
 
-
+export const getRegisteredTeacher = (): string | null => {
+  return localStorage.getItem(REGISTERED_TEACHER_KEY);
+};
+export const setRegisteredTeacher = (initials: string): void => {
+    localStorage.setItem(
+        REGISTERED_TEACHER_KEY,
+        initials.trim().toUpperCase()
+    );
+};
 // --- Class & Student Management (Dynamic Data) ---
 
 export const getClasses = (): ClassSection[] => {

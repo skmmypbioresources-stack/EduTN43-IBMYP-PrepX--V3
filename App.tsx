@@ -4,8 +4,14 @@ import TeacherView from './pages/TeacherView';
 import CoordinatorDashboard, { CoordinatorScope } from './pages/CoordinatorDashboard';
 import HOSDashboard from './pages/HOSDashboard';
 import { InstallPWA } from './components/InstallPWA';
-import { QrCode, ClipboardList, Shield, GraduationCap, CalendarClock, Hand, Lock, ChevronRight, X, UserCog, Sparkles } from 'lucide-react';
-import { getTimetableImage, hasAnyTimetable, getClasses } from './services/storageService';
+import { QrCode, ClipboardList, Shield, GraduationCap, CalendarClock, Hand, Lock, ChevronRight, X, UserCog, Sparkles, Smartphone } from 'lucide-react';
+import {
+    getTimetableImage,
+    hasAnyTimetable,
+    getClasses,
+    getRegisteredTeacher,
+    setRegisteredTeacher
+} from './services/storageService';
 import { Wing } from './types';
 
 export type View = 'home' | 'teacher' | 'coordinator' | 'hos';
@@ -13,7 +19,28 @@ export type View = 'home' | 'teacher' | 'coordinator' | 'hos';
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('home');
   const [showCover, setShowCover] = useState(true);
-  
+  // Teacher device registration
+  const [registeredTeacher, setRegisteredTeacherState] = useState<string | null>(null);
+  const [showTeacherRegistration, setShowTeacherRegistration] = useState(false);
+  const [teacherInitialsInput, setTeacherInitialsInput] = useState('');
+  const handleTeacherRegistration = () => {
+      const initials = teacherInitialsInput.trim().toUpperCase();
+
+      if (!initials) return;
+      setRegisteredTeacher(initials);
+      setRegisteredTeacherState(initials);
+      setShowTeacherRegistration(false);
+      setTeacherInitialsInput('');
+  };
+  useEffect(() => {
+    const savedTeacher = getRegisteredTeacher();
+
+    if (savedTeacher) {
+      setRegisteredTeacherState(savedTeacher);
+    } else {
+      setShowTeacherRegistration(true);
+    }
+  }, []);
   // Timetable State
   const [activeCoverWing, setActiveCoverWing] = useState<Wing>('MYP');
   const [timetableImage, setTimetableImage] = useState<string | null>(null);
@@ -236,8 +263,50 @@ const App: React.FC = () => {
               </div>
           </div>
       )}
+    {showTeacherRegistration && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-sm rounded-2xl p-8 shadow-2xl">
+                <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Smartphone className="w-8 h-8 text-blue-600" />
+                    </div>
 
-      <main className="relative z-10">
+                    <h2 className="text-xl font-bold text-slate-900">
+                        Register Teacher Device
+                    </h2>
+
+                    <p className="text-sm text-slate-500 mt-2">
+                        Enter your teacher initials. This device will use these initials for attendance records.
+                    </p>
+                </div>
+
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Teacher Initials
+                </label>
+
+                <input
+                    type="text"
+                    value={teacherInitialsInput}
+                    onChange={(e) => setTeacherInitialsInput(e.target.value.toUpperCase())}
+                    placeholder="e.g. SKM"
+                    maxLength={6}
+                    autoFocus
+                    className="w-full text-center text-2xl font-bold tracking-widest py-3 border border-slate-300 rounded-xl outline-none focus:border-blue-500"
+                />
+
+                <button
+                    onClick={handleTeacherRegistration}
+                    disabled={!teacherInitialsInput.trim()}
+                    className="w-full mt-6 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                    Register This Device
+                </button>
+            </div>
+        </div>
+    )}
+
+    <main className="relative z-10">
+
         {currentView === 'home' && (
           <>
              {/* Smart Cover / Timetable View */}

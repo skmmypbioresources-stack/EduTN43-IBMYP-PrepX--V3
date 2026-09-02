@@ -3,7 +3,7 @@ import { QrCode, Save, Clock, XCircle, CheckCircle, Search, ArrowLeft, Sun, Moon
 import QRScanner from '../components/QRScanner';
 import { ClassSection, StudentAttendanceRecord, AttendanceStatus, SessionType, DisciplinaryRecord, Wing } from '../types';
 import { MOCK_TEACHERS, TEACHERS_LIST } from '../constants';
-import { saveAttendanceLog, saveDisciplinaryRecord, getDisciplinaryRecordsForToday, getClasses, getAppSettings, getExistingLogForClass, getTimetableImage, isDeviceTrusted, trustDevice } from '../services/storageService';
+import { saveAttendanceLog, saveDisciplinaryRecord, getDisciplinaryRecordsForToday, getClasses, getAppSettings, getExistingLogForClass, getTimetableImage, isDeviceTrusted, trustDevice, getRegisteredTeacher } from '../services/storageService';
 
 interface TeacherViewProps {
   autoSelectedClassId?: string | null;
@@ -35,7 +35,7 @@ const TeacherView: React.FC<TeacherViewProps> = ({ autoSelectedClassId, onLogout
   const [isScanning, setIsScanning] = useState(false);
   const [selectedWing, setSelectedWing] = useState<Wing>('MYP'); // Default Wing
   const [selectedClass, setSelectedClass] = useState<ClassSection | null>(null);
-  const [teacherName, setTeacherName] = useState(MOCK_TEACHERS[0]);
+  const [teacherName, setTeacherName] = useState(() => getRegisteredTeacher() || MOCK_TEACHERS[0]);
   const [session, setSession] = useState<SessionType>('Evening'); // Default to Evening now
   const [records, setRecords] = useState<Record<string, StudentAttendanceRecord>>({});
   const [searchTerm, setSearchTerm] = useState('');
@@ -163,7 +163,7 @@ const TeacherView: React.FC<TeacherViewProps> = ({ autoSelectedClassId, onLogout
         // EDIT MODE: Load existing data
         setIsEditMode(true);
         setIsClassSubmitted(false); // Allow them to edit it, but don't show "Submitted" disabled state yet
-        setTeacherName(existingLog.teacherName); // Set to the teacher who originally marked it (optional, but good for context)
+
         
         const loadedRecords: Record<string, StudentAttendanceRecord> = {};
         existingLog.records.forEach(r => {
@@ -245,26 +245,26 @@ const TeacherView: React.FC<TeacherViewProps> = ({ autoSelectedClassId, onLogout
       return;
     }
 
-    saveAttendanceLog({
-      id: Date.now().toString(),
-      classId: selectedClass.id,
-      timestamp: Date.now(),
-      session,
-      teacherName,
-      records: Object.values(records) as StudentAttendanceRecord[]
-    });
+     saveAttendanceLog({
+       id: Date.now().toString(),
+       classId: selectedClass.id,
+       timestamp: Date.now(),
+       session,
+       teacherName,
+       records: Object.values(records) as StudentAttendanceRecord[]
+     });
 
-    // 1. Show Overlay Animation
-    setSubmittedOverlay(true);
-    
-    // 2. Set Persistent "Done" State
-    setIsClassSubmitted(true);
+     // 1. Show Overlay Animation
+     setSubmittedOverlay(true);
 
-    // 3. Remove Overlay after delay, but keep "isClassSubmitted" true
-    setTimeout(() => {
-        setSubmittedOverlay(false);
-    }, 2000);
-  };
+     // 2. Set Persistent "Done" State
+     setIsClassSubmitted(true);
+
+     // 3. Remove Overlay after delay, but keep "isClassSubmitted" true
+     setTimeout(() => {
+         setSubmittedOverlay(false);
+     }, 2000);
+   };
 
   const handleSaveReport = () => {
     if (!reportingStudent || !selectedClass || !reportDescription.trim()) return;
@@ -402,22 +402,15 @@ const TeacherView: React.FC<TeacherViewProps> = ({ autoSelectedClassId, onLogout
                   </div>
                 </div>
 
-                {/* Teacher Selector */}
+                {/* Registered Teacher */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Teacher</label>
-                    <select 
-                        value={teacherName} 
-                        onChange={(e) => setTeacherName(e.target.value)}
-                        className="w-full p-3 border border-slate-300 rounded-lg outline-none bg-white font-medium text-slate-800 text-sm"
-                    >
-                        {TEACHERS_LIST.map(t => (
-                            <option key={t.id} value={t.code}>
-                                {t.code} — {t.name}
-                            </option>
-                        ))}
-                    </select>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Teacher
+                    </label>
+                    <div className="w-full p-3 border border-slate-300 rounded-lg bg-slate-50 font-medium text-slate-800 text-sm">
+                        {teacherName}
+                    </div>
                 </div>
-
                 {/* Manual Class Selector (Filtered) - HIDDEN BY DEFAULT */}
                 {showManualSelection && (
                     <div className="animate-in fade-in slide-in-from-top-4">
@@ -459,7 +452,7 @@ const TeacherView: React.FC<TeacherViewProps> = ({ autoSelectedClassId, onLogout
         </div>
       </div>
     );
-  }
+}
 
   // Attendance Form (Render logic remains same)
   // ... (Keeping existing attendance form render code from previous version, just ensuring types are correct)
@@ -635,6 +628,7 @@ const TeacherView: React.FC<TeacherViewProps> = ({ autoSelectedClassId, onLogout
                             placeholder="Reason required..."
                             value={record.reason || ''}
                             disabled={isClassSubmitted}
+
                             onChange={(e) => updateReason(student.id, e.target.value)}
                             className="w-full mt-3 p-2 text-sm border border-slate-300 rounded-md outline-none focus:border-indigo-500"
                         />
@@ -646,6 +640,7 @@ const TeacherView: React.FC<TeacherViewProps> = ({ autoSelectedClassId, onLogout
 
       {/* Submit Footer */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur border-t z-30">
+
         <div className="max-w-3xl mx-auto">
              <button
                 onClick={handleSubmitAttendance}
@@ -664,5 +659,4 @@ const TeacherView: React.FC<TeacherViewProps> = ({ autoSelectedClassId, onLogout
     </div>
   );
 };
-
 export default TeacherView;
