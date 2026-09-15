@@ -92,7 +92,6 @@ export const MYP1B_RAW: Student[] = [
 ];
 
 export const MYP2A_RAW: Student[] = [
-  { id: 'myp2a-1', rollNumber: 8642, name: 'JAANVI AGARWAL' },
   { id: 'myp2a-2', rollNumber: 8617, name: 'AJOONI KAUR' },
   { id: 'myp2a-3', rollNumber: 8604, name: 'SK ANMOL' },
   { id: 'myp2a-4', rollNumber: 8588, name: 'SHRESTH RUIA' },
@@ -104,7 +103,9 @@ export const MYP2A_RAW: Student[] = [
   { id: 'myp2a-10', rollNumber: 8088, name: 'VIVAAN KAUL' },
   { id: 'myp2a-11', rollNumber: 7756, name: 'HET HITESHBHAI BHARVAD' },
   { id: 'myp2a-12', rollNumber: 7731, name: 'ITHAL INEYA L S' },
-  { id: 'myp2a-13', rollNumber: 8658, name: 'SIMHASKANDA KUNUKUNTLA' }
+  { id: 'myp2a-13', rollNumber: 8658, name: 'SIMHASKANDA KUNUKUNTLA' },
+  { id: 'myp2a-14', rollNumber: 8677, name: 'ZAID KHAN' },
+  { id: 'myp2a-15', rollNumber: 8428, name: 'JAI GUPTA' }
 ];
 
 export const MYP2B_RAW: Student[] = [

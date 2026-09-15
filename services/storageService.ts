@@ -116,6 +116,24 @@ onSnapshot(collection(db, "classes"), async (snapshot) => {
       } else {
         const target = classesList[targetIndex];
         let updatedRoster = false;
+
+        // Specific synchronization for MYP 2A (myp2-a)
+        if (officialCls.id === 'myp2-a') {
+          const hadJaanvi = target.students.some(s => s.rollNumber === 8642 || s.name.toUpperCase().includes('JAANVI AGARWAL'));
+          if (hadJaanvi) {
+            target.students = target.students.filter(s => s.rollNumber !== 8642 && !s.name.toUpperCase().includes('JAANVI AGARWAL'));
+            updatedRoster = true;
+          }
+          if (!target.students.some(s => s.rollNumber === 8677 || s.name.toUpperCase().includes('ZAID KHAN'))) {
+            target.students.push({ id: 'myp2a-14', rollNumber: 8677, name: 'ZAID KHAN' });
+            updatedRoster = true;
+          }
+          if (!target.students.some(s => s.rollNumber === 8428 || s.name.toUpperCase().includes('JAI GUPTA'))) {
+            target.students.push({ id: 'myp2a-15', rollNumber: 8428, name: 'JAI GUPTA' });
+            updatedRoster = true;
+          }
+        }
+
         for (const officialStudent of officialCls.students) {
           const existingStudent = target.students.find(s => s.id === officialStudent.id || s.name.trim().toUpperCase() === officialStudent.name.trim().toUpperCase());
           if (existingStudent && existingStudent.rollNumber !== officialStudent.rollNumber) {
@@ -326,6 +344,23 @@ export const getClasses = (): ClassSection[] => {
         classes.push(JSON.parse(JSON.stringify(officialCls)));
         modified = true;
       } else {
+        // Specific synchronization for MYP 2A (myp2-a)
+        if (officialCls.id === 'myp2-a') {
+          const hadJaanvi = classes[idx].students.some(s => s.rollNumber === 8642 || s.name.toUpperCase().includes('JAANVI AGARWAL'));
+          if (hadJaanvi) {
+            classes[idx].students = classes[idx].students.filter(s => s.rollNumber !== 8642 && !s.name.toUpperCase().includes('JAANVI AGARWAL'));
+            modified = true;
+          }
+          if (!classes[idx].students.some(s => s.rollNumber === 8677 || s.name.toUpperCase().includes('ZAID KHAN'))) {
+            classes[idx].students.push({ id: 'myp2a-14', rollNumber: 8677, name: 'ZAID KHAN' });
+            modified = true;
+          }
+          if (!classes[idx].students.some(s => s.rollNumber === 8428 || s.name.toUpperCase().includes('JAI GUPTA'))) {
+            classes[idx].students.push({ id: 'myp2a-15', rollNumber: 8428, name: 'JAI GUPTA' });
+            modified = true;
+          }
+        }
+
         for (const officialStudent of officialCls.students) {
           const existingStudent = classes[idx].students.find(s => s.id === officialStudent.id || s.name.trim().toUpperCase() === officialStudent.name.trim().toUpperCase());
           if (existingStudent && existingStudent.rollNumber !== officialStudent.rollNumber) {
@@ -344,6 +379,7 @@ export const getClasses = (): ClassSection[] => {
         }
         if (modified) {
           classes[idx].students.sort((a, b) => a.rollNumber - b.rollNumber);
+          setDoc(doc(db, "classes", classes[idx].id), classes[idx]).catch(() => {});
         }
       }
     }
@@ -473,6 +509,7 @@ export const addStudentToClass = (classId: string, name: string, rollNumber: num
 
     setDoc(doc(db, "classes", classId), classes[classIndex])
       .catch(error => handleFirestoreError(error, OperationType.WRITE, `classes/${classId}`));
+    window.dispatchEvent(new Event('storageService_classUpdate'));
   }
 };
 
@@ -491,6 +528,7 @@ export const updateStudentInClass = (classId: string, studentId: string, name: s
 
       setDoc(doc(db, "classes", classId), classes[classIndex])
         .catch(error => handleFirestoreError(error, OperationType.WRITE, `classes/${classId}`));
+      window.dispatchEvent(new Event('storageService_classUpdate'));
     }
   }
 };
@@ -524,6 +562,7 @@ export const moveStudentToClass = (sourceClassId: string, targetClassId: string,
         .catch(error => handleFirestoreError(error, OperationType.WRITE, `classes/${sourceClassId}`));
       setDoc(doc(db, "classes", targetClassId), classes[targetIndex])
         .catch(error => handleFirestoreError(error, OperationType.WRITE, `classes/${targetClassId}`));
+      window.dispatchEvent(new Event('storageService_classUpdate'));
     }
   }
 };
@@ -544,6 +583,7 @@ export const reorderClassRollNumbers = (classId: string): void => {
 
     setDoc(doc(db, "classes", classId), classes[classIndex])
       .catch(error => handleFirestoreError(error, OperationType.WRITE, `classes/${classId}`));
+    window.dispatchEvent(new Event('storageService_classUpdate'));
   }
 };
 
@@ -570,6 +610,7 @@ export const bulkAddStudentsToClass = (classId: string, studentNames: string[]):
 
     setDoc(doc(db, "classes", classId), classes[classIndex])
       .catch(error => handleFirestoreError(error, OperationType.WRITE, `classes/${classId}`));
+    window.dispatchEvent(new Event('storageService_classUpdate'));
   }
 };
 
@@ -617,6 +658,7 @@ export const deleteStudentFromClass = (classId: string, studentId: string): void
 
     setDoc(doc(db, "classes", classId), classes[classIndex])
       .catch(error => handleFirestoreError(error, OperationType.WRITE, `classes/${classId}`));
+    window.dispatchEvent(new Event('storageService_classUpdate'));
   }
 };
 
