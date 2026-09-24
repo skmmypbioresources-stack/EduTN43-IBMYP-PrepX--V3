@@ -134,6 +134,45 @@ onSnapshot(collection(db, "classes"), async (snapshot) => {
           }
         }
 
+        // Specific synchronization for MYP 2C (myp2-c): remove Jaanvi Agarwal
+        if (officialCls.id === 'myp2-c') {
+          const hadJaanvi = target.students.some(s => s.rollNumber === 2 || s.name.toUpperCase().includes('JAANVI'));
+          if (hadJaanvi) {
+            target.students = target.students.filter(s => s.rollNumber !== 2 && !s.name.toUpperCase().includes('JAANVI'));
+            updatedRoster = true;
+          }
+        }
+
+        // Specific synchronization for MYP 3B (myp3-b): remove Shiv Ramchandra Sadigale
+        if (officialCls.id === 'myp3-b') {
+          const hadShiv = target.students.some(s => s.rollNumber === 8113 || s.name.toUpperCase().includes('SADIGALE') || s.name.toUpperCase().includes('SHIV RAMCHANDRA'));
+          if (hadShiv) {
+            target.students = target.students.filter(s => s.rollNumber !== 8113 && !s.name.toUpperCase().includes('SADIGALE') && !s.name.toUpperCase().includes('SHIV RAMCHANDRA'));
+            updatedRoster = true;
+          }
+        }
+
+        // Specific synchronization for MYP 4A (myp4-a): remove Neel, add Nethanya
+        if (officialCls.id === 'myp4-a') {
+          const hadNeel = target.students.some(s => s.rollNumber === 8046 || s.name.toUpperCase().includes('KATHROTIYA') || s.name.toUpperCase().includes('NEEL BHAVESHBHAI'));
+          if (hadNeel) {
+            target.students = target.students.filter(s => s.rollNumber !== 8046 && !s.name.toUpperCase().includes('KATHROTIYA') && !s.name.toUpperCase().includes('NEEL BHAVESHBHAI'));
+            updatedRoster = true;
+          }
+          if (!target.students.some(s => s.rollNumber === 8678 || s.name.toUpperCase().includes('NETHANYA'))) {
+            target.students.push({ id: 'myp4a-19', rollNumber: 8678, name: 'NETHANYA SUVARTHA CHANDOLU' });
+            updatedRoster = true;
+          }
+        }
+
+        // Specific synchronization for MYP 4C (myp4-c): add Neel (transferred from 4A)
+        if (officialCls.id === 'myp4-c') {
+          if (!target.students.some(s => s.rollNumber === 8046 || s.name.toUpperCase().includes('KATHROTIYA') || s.name.toUpperCase().includes('NEEL BHAVESHBHAI'))) {
+            target.students.push({ id: 'myp4c-18', rollNumber: 8046, name: 'NEEL BHAVESHBHAI KATHROTIYA' });
+            updatedRoster = true;
+          }
+        }
+
         for (const officialStudent of officialCls.students) {
           const existingStudent = target.students.find(s => s.id === officialStudent.id || s.name.trim().toUpperCase() === officialStudent.name.trim().toUpperCase());
           if (existingStudent && existingStudent.rollNumber !== officialStudent.rollNumber) {
@@ -357,6 +396,45 @@ export const getClasses = (): ClassSection[] => {
           }
           if (!classes[idx].students.some(s => s.rollNumber === 8428 || s.name.toUpperCase().includes('JAI GUPTA'))) {
             classes[idx].students.push({ id: 'myp2a-15', rollNumber: 8428, name: 'JAI GUPTA' });
+            modified = true;
+          }
+        }
+
+        // Specific synchronization for MYP 2C (myp2-c): remove Jaanvi Agarwal
+        if (officialCls.id === 'myp2-c') {
+          const hadJaanvi = classes[idx].students.some(s => s.rollNumber === 2 || s.name.toUpperCase().includes('JAANVI'));
+          if (hadJaanvi) {
+            classes[idx].students = classes[idx].students.filter(s => s.rollNumber !== 2 && !s.name.toUpperCase().includes('JAANVI'));
+            modified = true;
+          }
+        }
+
+        // Specific synchronization for MYP 3B (myp3-b): remove Shiv Ramchandra Sadigale
+        if (officialCls.id === 'myp3-b') {
+          const hadShiv = classes[idx].students.some(s => s.rollNumber === 8113 || s.name.toUpperCase().includes('SADIGALE') || s.name.toUpperCase().includes('SHIV RAMCHANDRA'));
+          if (hadShiv) {
+            classes[idx].students = classes[idx].students.filter(s => s.rollNumber !== 8113 && !s.name.toUpperCase().includes('SADIGALE') && !s.name.toUpperCase().includes('SHIV RAMCHANDRA'));
+            modified = true;
+          }
+        }
+
+        // Specific synchronization for MYP 4A (myp4-a): remove Neel, add Nethanya
+        if (officialCls.id === 'myp4-a') {
+          const hadNeel = classes[idx].students.some(s => s.rollNumber === 8046 || s.name.toUpperCase().includes('KATHROTIYA') || s.name.toUpperCase().includes('NEEL BHAVESHBHAI'));
+          if (hadNeel) {
+            classes[idx].students = classes[idx].students.filter(s => s.rollNumber !== 8046 && !s.name.toUpperCase().includes('KATHROTIYA') && !s.name.toUpperCase().includes('NEEL BHAVESHBHAI'));
+            modified = true;
+          }
+          if (!classes[idx].students.some(s => s.rollNumber === 8678 || s.name.toUpperCase().includes('NETHANYA'))) {
+            classes[idx].students.push({ id: 'myp4a-19', rollNumber: 8678, name: 'NETHANYA SUVARTHA CHANDOLU' });
+            modified = true;
+          }
+        }
+
+        // Specific synchronization for MYP 4C (myp4-c): add Neel (transferred from 4A)
+        if (officialCls.id === 'myp4-c') {
+          if (!classes[idx].students.some(s => s.rollNumber === 8046 || s.name.toUpperCase().includes('KATHROTIYA') || s.name.toUpperCase().includes('NEEL BHAVESHBHAI'))) {
+            classes[idx].students.push({ id: 'myp4c-18', rollNumber: 8046, name: 'NEEL BHAVESHBHAI KATHROTIYA' });
             modified = true;
           }
         }

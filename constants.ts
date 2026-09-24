@@ -128,7 +128,6 @@ export const MYP2B_RAW: Student[] = [
 
 export const MYP2C_RAW: Student[] = [
   { id: 'myp2c-1', rollNumber: 1, name: 'MIRAYA SHARVIL SHRIDHAR' },
-  { id: 'myp2c-2', rollNumber: 2, name: 'JAANVI AGARWAL' },
   { id: 'myp2c-3', rollNumber: 3, name: 'VIHAAN YELAMARTI' },
   { id: 'myp2c-4', rollNumber: 4, name: 'MANTRA HIMANSHUBHAI DOBARIYA' },
   { id: 'myp2c-5', rollNumber: 5, name: 'ARKO BANERJEE' },
@@ -170,7 +169,6 @@ export const MYP3B_RAW: Student[] = [
   { id: 'myp3b-3', rollNumber: 8371, name: 'YOHAN CHINTAN RIBADIA' },
   { id: 'myp3b-4', rollNumber: 8336, name: 'SANAVI BARMAN' },
   { id: 'myp3b-5', rollNumber: 8299, name: 'RIKITH PACHIPULA' },
-  { id: 'myp3b-6', rollNumber: 8113, name: 'SHIV RAMCHANDRA SADIGALE' },
   { id: 'myp3b-7', rollNumber: 8101, name: 'S LACSHIT NAARAYANAN' },
   { id: 'myp3b-8', rollNumber: 8090, name: 'DIVYAM AGARWAL' },
   { id: 'myp3b-9', rollNumber: 8032, name: 'AYRA ASHISH LAKHANI' },
@@ -187,7 +185,6 @@ export const MYP3B_RAW: Student[] = [
 ];
 
 export const MYP4A_RAW: Student[] = [
-  { id: 'myp4a-1', rollNumber: 8046, name: 'NEEL BHAVESHBHAI KATHROTIYA' },
   { id: 'myp4a-2', rollNumber: 7939, name: 'RYANN FRANCY' },
   { id: 'myp4a-3', rollNumber: 8216, name: 'AARYAN DENISH KANASAGARA' },
   { id: 'myp4a-4', rollNumber: 7560, name: 'TEJESWAR' },
@@ -204,7 +201,8 @@ export const MYP4A_RAW: Student[] = [
   { id: 'myp4a-15', rollNumber: 8496, name: 'JAS DARYANI' },
   { id: 'myp4a-16', rollNumber: 8639, name: 'SAMAR AJAY MEGHANI' },
   { id: 'myp4a-17', rollNumber: 8616, name: 'VIDHI SIDDHARTH SHAH' },
-  { id: 'myp4a-18', rollNumber: 8064, name: 'YASHASWINI' }
+  { id: 'myp4a-18', rollNumber: 8064, name: 'YASHASWINI' },
+  { id: 'myp4a-19', rollNumber: 8678, name: 'NETHANYA SUVARTHA CHANDOLU' }
 ];
 
 export const MYP4B_RAW: Student[] = [
@@ -247,7 +245,8 @@ export const MYP4C_RAW: Student[] = [
   { id: 'myp4c-14', rollNumber: 7863, name: 'ANANT SINGH ARORA' },
   { id: 'myp4c-15', rollNumber: 8370, name: 'ARYAMAN PANKAJ KOTADIYA' },
   { id: 'myp4c-16', rollNumber: 7825, name: 'SHAURYA RAHUL MANE' },
-  { id: 'myp4c-17', rollNumber: 8668, name: 'MANYA PINJANI' }
+  { id: 'myp4c-17', rollNumber: 8668, name: 'MANYA PINJANI' },
+  { id: 'myp4c-18', rollNumber: 8046, name: 'NEEL BHAVESHBHAI KATHROTIYA' }
 ];
 
 export const MYP5A_RAW: Student[] = [
